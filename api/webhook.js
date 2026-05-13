@@ -32,7 +32,10 @@ bot.command('status', async (ctx) => {
   const domain = process.env.RAILWAY_DOMAIN || 'lucky-vietlot-production.up.railway.app';
   try {
     const start = Date.now();
-    await axios.get(`https://${domain}/api/health`, { timeout: 3000 });
+    await axios.get(`https://${domain}`, { 
+      timeout: 5000,
+      validateStatus: (status) => status < 500 
+    });
     const ping = Date.now() - start;
     await ctx.reply(`🟢 Máy chủ đang BẬT.\n📡 Ping: ${ping}ms\n🌐 Link: https://${domain}`);
   } catch (e) {
