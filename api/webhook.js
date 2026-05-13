@@ -140,8 +140,14 @@ bot.command('update', async (ctx) => {
     const domain = process.env.RAILWAY_DOMAIN || 'lucky-vietlot-production.up.railway.app';
     const apiUrl = `https://${domain}/api/update?chat_id=${ctx.chat.id}&message_id=${initialMessage.message_id}`;
     
-    // Gọi lửa xong bỏ chạy (không await để Vercel không bị timeout 10s)
-    fetch(apiUrl).catch(e => console.error("Lỗi khi gọi Railway:", e));
+    // Sử dụng axios với timeout 1500ms để đảm bảo request ĐÃ ĐƯỢC GỬI ĐI
+    // trước khi Vercel đóng băng function. 
+    // Chúng ta catch lỗi timeout (hoàn toàn bình thường) để không crash bot.
+    try {
+      await axios.get(apiUrl, { timeout: 1500 });
+    } catch (e) {
+      // Bỏ qua lỗi timeout vì ta chỉ cần "kích hoạt" Railway rồi bỏ chạy, không cần chờ kết quả
+    }
     
   } catch (error) {
     console.error(error);
