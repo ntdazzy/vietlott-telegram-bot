@@ -32,7 +32,8 @@ bot.help(async (ctx) => {
     "• /status - Kiểm tra server Sống/Chết & Link Web\n\n" +
     "🔄 <b>Dữ liệu & Đồng bộ:</b>\n" +
     "• /update - Cập nhật kết quả mới nhất hôm nay\n" +
-    "• /syncall - Đồng bộ lại toàn bộ lịch sử từ 2016\n\n" +
+    "• /syncall - Đồng bộ lại toàn bộ lịch sử từ 2016\n" +
+    "• /db - Kiểm tra tổng số kỳ quay trong Database\n\n" +
     "🔍 <b>Tra cứu & Dự đoán:</b>\n" +
     "• /kq &lt;645|655&gt; - Xem kết quả mới nhất\n" +
     "• /dudoan &lt;645|655&gt; - Dự đoán AI Ensemble VIP\n\n" +
@@ -59,6 +60,26 @@ bot.command('status', async (ctx) => {
     await ctx.reply(`🟢 Máy chủ đang BẬT.\n📡 Ping: ${ping}ms\n🌐 Link: https://${domain}`);
   } catch (e) {
     await ctx.reply(`🔴 Máy chủ đang TẮT (hoặc đang khởi động).`);
+  }
+});
+
+// Lệnh /db
+bot.command('db', async (ctx) => {
+  const domain = process.env.RAILWAY_DOMAIN || 'lucky-vietlot-production.up.railway.app';
+  try {
+    const res = await axios.get(`https://${domain}/api/db-status`, { timeout: 5000 });
+    if (res.data.success) {
+      const counts = res.data.counts;
+      let msg = "📊 <b>THỐNG KÊ DATABASE</b>\n\n";
+      for (const [game, count] of Object.entries(counts)) {
+        msg += `• ${game}: <b>${count}</b> kỳ\n`;
+      }
+      await ctx.reply(msg, { parse_mode: 'HTML' });
+    } else {
+      await ctx.reply("❌ Không thể lấy dữ liệu Database.");
+    }
+  } catch (e) {
+    await ctx.reply("❌ Lỗi kết nối Web. Vui lòng gõ /on trước rồi thử lại.");
   }
 });
 
