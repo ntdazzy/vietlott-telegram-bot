@@ -4,8 +4,8 @@ import { updateRailwayReplicas } from '../lib/railway.js';
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
 // Lệnh /start
-bot.start((ctx) => {
-  ctx.reply(
+bot.start(async (ctx) => {
+  await ctx.reply(
     "👋 Chào bạn! Mình là Bot điều khiển máy chủ Vietlott.\n\n" +
     "Gõ /on để BẬT Web 🟢\n" +
     "Gõ /off để TẮT Web 🔴"
