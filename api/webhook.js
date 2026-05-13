@@ -33,6 +33,7 @@ bot.help(async (ctx) => {
     "🔄 <b>Dữ liệu & Đồng bộ:</b>\n" +
     "• /update - Cập nhật kết quả mới nhất hôm nay\n" +
     "• /syncall - Đồng bộ lại toàn bộ lịch sử từ 2016\n" +
+    "• /cancel - Hủy tiến trình đồng bộ đang chạy\n" +
     "• /db - Kiểm tra tổng số kỳ quay trong Database\n\n" +
     "🔍 <b>Tra cứu & Dự đoán:</b>\n" +
     "• /kq &lt;645|655&gt; - Xem kết quả mới nhất\n" +
@@ -225,6 +226,17 @@ bot.command('off', async (ctx) => {
     await ctx.reply("🛑 Server đã TẮT thành công! Ngưng tính giờ miễn phí.");
   } catch (error) {
     await ctx.reply(`❌ Lỗi khi tắt server: ${error.message}`);
+  }
+});
+
+// Lệnh /cancel
+bot.command('cancel', async (ctx) => {
+  const domain = process.env.RAILWAY_DOMAIN || 'lucky-vietlot-production.up.railway.app';
+  try {
+    await axios.get(`https://${domain}/api/sync-cancel`, { timeout: 5000 });
+    await ctx.reply("🛑 Đã gửi lệnh DỪNG tiến trình đồng bộ. Vui lòng đợi vài giây để hệ thống dừng hẳn.");
+  } catch (e) {
+    await ctx.reply("❌ Lỗi khi gửi lệnh hủy. Có thể server đang tắt.");
   }
 });
 
