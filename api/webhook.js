@@ -18,14 +18,32 @@ bot.use(async (ctx, next) => {
 bot.start(async (ctx) => {
   await ctx.reply(
     "👋 Chào Chủ Nhân! Trợ lý Vietlott AI đã sẵn sàng.\n\n" +
-    "🟢 /on - Bật Máy chủ (để vào Web/App)\n" +
-    "🔴 /off - Tắt Máy chủ (tiết kiệm giờ)\n" +
-    "🔄 /update - Ép cào dữ liệu mới ngay lập tức\n" +
-    "⚡ /syncall - Đồng bộ toàn bộ lịch sử (2016-nay)\n" +
-    "📊 /status - Kiểm tra tình trạng máy chủ\n" +
-    "🔍 /kq <645|655> - Xem nhanh kết quả xổ số mới nhất\n" +
-    "🔮 /dudoan <645|655> - Xin số dự đoán VIP"
+    "Gõ /help để xem danh sách lệnh và ý nghĩa của từng lệnh nhé!"
   );
+});
+
+// Lệnh /help
+bot.help(async (ctx) => {
+  const helpText = 
+    "📜 <b>DANH SÁCH LỆNH BOT VIETLOTT AI</b>\n\n" +
+    "⚡ <b>Quản lý Máy chủ:</b>\n" +
+    "• /on - Bật máy chủ (Mở Web/App)\n" +
+    "• /off - Tắt máy chủ (Tiết kiệm giờ Railway)\n" +
+    "• /status - Kiểm tra server Sống/Chết & Link Web\n\n" +
+    "🔄 <b>Dữ liệu & Đồng bộ:</b>\n" +
+    "• /update - Cập nhật kết quả mới nhất hôm nay\n" +
+    "• /syncall - Đồng bộ lại toàn bộ lịch sử từ 2016\n\n" +
+    "🔍 <b>Tra cứu & Dự đoán:</b>\n" +
+    "• /kq &lt;645|655&gt; - Xem kết quả mới nhất\n" +
+    "• /dudoan &lt;645|655&gt; - Dự đoán AI Ensemble VIP\n\n" +
+    "💡 <b>Lệnh khác:</b>\n" +
+    "• /help - Hiển thị danh sách này";
+  
+  await ctx.reply(helpText, { parse_mode: 'HTML' });
+});
+
+bot.command('help', async (ctx) => {
+  return ctx.help();
 });
 
 // Lệnh /status
