@@ -21,6 +21,7 @@ bot.start(async (ctx) => {
     "🟢 /on - Bật Máy chủ (để vào Web/App)\n" +
     "🔴 /off - Tắt Máy chủ (tiết kiệm giờ)\n" +
     "🔄 /update - Ép cào dữ liệu mới ngay lập tức\n" +
+    "⚡ /syncall - Đồng bộ toàn bộ lịch sử (2016-nay)\n" +
     "📊 /status - Kiểm tra tình trạng máy chủ\n" +
     "🔍 /kq <645|655> - Xem nhanh kết quả xổ số mới nhất\n" +
     "🔮 /dudoan <645|655> - Xin số dự đoán VIP"
@@ -40,6 +41,17 @@ bot.command('status', async (ctx) => {
     await ctx.reply(`🟢 Máy chủ đang BẬT.\n📡 Ping: ${ping}ms\n🌐 Link: https://${domain}`);
   } catch (e) {
     await ctx.reply(`🔴 Máy chủ đang TẮT (hoặc đang khởi động).`);
+  }
+});
+
+bot.command('syncall', async (ctx) => {
+  const initialMessage = await ctx.reply('⚡ Đang chuẩn bị đồng bộ toàn bộ lịch sử... [0%]');
+  const domain = process.env.RAILWAY_DOMAIN || 'lucky-vietlot-production.up.railway.app';
+  const apiUrl = `https://${domain}/api/sync-all?chat_id=${ctx.chat.id}&message_id=${initialMessage.message_id}`;
+  try {
+    await axios.get(apiUrl, { timeout: 2000 });
+  } catch (e) {
+    // Timeout là cố ý để không chờ Railway xử lý xong (tránh lỗi 10s của Vercel)
   }
 });
 
