@@ -120,12 +120,14 @@ bot.help(async (ctx) => {
         '• /status - Trạng thái server + ping\n\n' +
         '🔄 <b>Dữ liệu:</b>\n' +
         '• /update - Cập nhật kỳ mới hôm nay\n' +
-        '• /syncall - Đồng bộ toàn bộ lịch sử (chỉ thêm, không xóa)\n' +
+        '• /syncall - Sync tăng tiến (chỉ thêm kỳ mới)\n' +
+        '• /syncfull - Backfill TOÀN BỘ lịch sử (5-10 phút)\n' +
         '• /cancel - Hủy đồng bộ đang chạy\n' +
         '• /db - Thống kê DB\n\n' +
         '🔍 <b>Tra cứu & Dự đoán:</b>\n' +
         '• /kq &lt;645|655|535|max3dpro&gt; - Kết quả mới nhất\n' +
         '• /dudoan &lt;645|655|535&gt; - Gợi ý AI\n' +
+        '• /tickets - Danh sách vé đã chốt + trạng thái\n' +
         '• /them &lt;game&gt; &lt;kỳ&gt; &lt;ngày&gt; &lt;bóng&gt; [đb] - Thêm tay\n\n' +
         '   <i>VD: /them 645 1234 12/05/2026 01,02,03,04,05,06</i>'
     );
@@ -289,7 +291,10 @@ bot.command('update', async (ctx) => {
 
 bot.command('syncall', async (ctx) => {
     const full = /\bfull\b/i.test(ctx.message.text);
-    const msg = await reply(ctx, '⚡ Đang đánh thức server & khởi động đồng bộ...');
+    const modeLabel = full
+        ? '<b>TOÀN BỘ</b> (full backfill từ ngày đầu)'
+        : '<b>tăng tiến</b> (chỉ thêm kỳ mới)';
+    const msg = await reply(ctx, `⚡ Đang đánh thức server & khởi động đồng bộ ${modeLabel}...`);
     const url = `${API_BASE}/api/sync-all?chat_id=${ctx.chat.id}&message_id=${msg.message_id}${full ? '&full=1' : ''}`;
 
     const result = await triggerLongRunning(url, { wakeRetries: 4, wakeTimeoutMs: 10000, fireTimeoutMs: 4000 });
@@ -297,6 +302,46 @@ bot.command('syncall', async (ctx) => {
     if (!result.ok) {
         await ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, undefined,
             `❌ Không kích hoạt được sync: ${result.reason}\nGõ /on và đợi 30s rồi thử lại.`);
+    }
+});
+
+// /syncfull — convenience alias for /syncall full (backfill from day 0)
+bot.command('syncfull', async (ctx) => {
+    const msg = await reply(ctx,
+        '⚡ Đang khởi động backfill TOÀN BỘ lịch sử từ kỳ đầu tiên...\n' +
+        '<i>Chế độ này quét lại mọi ngày, thường mất 5-10 phút. Bot sẽ cập nhật tiến độ.</i>'
+    );
+    const url = `${API_BASE}/api/sync-all?chat_id=${ctx.chat.id}&message_id=${msg.message_id}&full=1`;
+    const result = await triggerLongRunning(url, { wakeRetries: 4, wakeTimeoutMs: 10000, fireTimeoutMs: 4000 });
+    if (!result.ok) {
+        await ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, undefined,
+            `❌ Không kích hoạt được sync: ${result.reason}`);
+    }
+});
+
+// /tickets — list pending/won tickets
+bot.command('tickets', async (ctx) => {
+    const msg = await reply(ctx, '⏳ Đang lấy danh sách vé...');
+    try {
+        const res = await axios.get(`${API_BASE}/api/tickets/list?limit=20`, { timeout: 20000 });
+        if (!res.data.success || res.data.tickets.length === 0) {
+            await ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, undefined,
+                '📭 Chưa có vé nào được chốt.\nTruy cập web → /du-doan → "Chốt bộ số".');
+            return;
+        }
+        let text = `📋 <b>${res.data.tickets.length} vé đã chốt</b>\n\n`;
+        for (const t of res.data.tickets.slice(0, 10)) {
+            const status = t.status === 'pending'
+                ? '⏳ Chờ kỳ tiếp'
+                : t.checkedAgainst?.prize?.id === 'none'
+                    ? '➖ Không trúng'
+                    : `${t.checkedAgainst.prize.emoji} ${t.checkedAgainst.prize.label}`;
+            text += `<b>#${t.id}</b> · ${t.game} · ${t.mainBalls.join(' ')}\n  → ${status}\n\n`;
+        }
+        await ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, undefined, text, { parse_mode: 'HTML' });
+    } catch (e) {
+        await ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, undefined,
+            `❌ ${asPlainError(e)}`);
     }
 });
 
